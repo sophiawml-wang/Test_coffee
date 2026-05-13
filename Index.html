@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>咖啡配方查詢</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: linear-gradient(135deg, #fff7ed, #ffedd5);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+      box-sizing: border-box;
+    }
+    .card {
+      background: white;
+      width: 100%;
+      max-width: 560px;
+      border-radius: 28px;
+      padding: 24px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.18);
+      box-sizing: border-box;
+    }
+    h1 {
+      margin: 0 0 8px;
+      text-align: center;
+      color: #78350f;
+      font-size: 32px;
+    }
+    .subtitle {
+      text-align: center;
+      color: #666;
+      margin-bottom: 24px;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 700;
+      color: #444;
+    }
+    select {
+      width: 100%;
+      padding: 16px;
+      font-size: 18px;
+      border-radius: 18px;
+      border: 1px solid #ddd;
+      margin-bottom: 16px;
+      box-sizing: border-box;
+      background: white;
+    }
+    .button-grid {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .size-grid { grid-template-columns: repeat(3, 1fr); }
+    .sugar-grid { grid-template-columns: repeat(4, 1fr); }
+    button {
+      padding: 14px 8px;
+      border-radius: 18px;
+      border: 1px solid #fcd9a8;
+      background: white;
+      color: #7c2d12;
+      font-weight: 800;
+      font-size: 16px;
+    }
+    button.active-size {
+      background: #92400e;
+      color: white;
+      border-color: #92400e;
+    }
+    button.active-sugar {
+      background: #f97316;
+      color: white;
+      border-color: #f97316;
+    }
+    .result {
+      margin-top: 16px;
+      display: grid;
+      gap: 14px;
+    }
+    .result-box {
+      border-radius: 24px;
+      padding: 20px;
+      text-align: center;
+    }
+    .pumps {
+      background: #fef3c7;
+      border: 1px solid #fde68a;
+      color: #78350f;
+    }
+    .espresso {
+      background: #ffedd5;
+      border: 1px solid #fed7aa;
+      color: #7c2d12;
+    }
+    .result-label {
+      font-size: 18px;
+      margin-bottom: 6px;
+    }
+    .result-value {
+      font-size: 44px;
+      font-weight: 900;
+    }
+    .current {
+      margin-top: 16px;
+      background: #f9fafb;
+      border-radius: 18px;
+      padding: 14px;
+      text-align: center;
+      color: #444;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>☕ 咖啡配方查詢</h1>
+    <div class="subtitle">快速查看糖量與濃縮咖啡底</div>
+
+    <label>咖啡品項</label>
+    <select id="coffee"></select>
+
+    <div class="button-grid size-grid" id="sizeButtons"></div>
+    <div class="button-grid sugar-grid" id="sugarButtons"></div>
+
+    <div class="result">
+      <div class="result-box pumps">
+        <div class="result-label">糖量</div>
+        <div class="result-value" id="pumpsResult"></div>
+      </div>
+      <div class="result-box espresso">
+        <div class="result-label">濃縮咖啡底</div>
+        <div class="result-value" id="espressoResult"></div>
+      </div>
+    </div>
+
+    <div class="current">
+      <strong>目前選擇：</strong><span id="currentChoice"></span>
+    </div>
+  </div>
+
+  <script>
+    function makeStandard(espressoBySize) {
+      return {
+        "中杯": {
+          "全糖": { pumps: "2 pumps", espresso: espressoBySize["中杯"] },
+          "少糖": { pumps: "1.5 pumps", espresso: espressoBySize["中杯"] },
+          "半糖": { pumps: "1 pumps", espresso: espressoBySize["中杯"] },
+          "微糖": { pumps: "0.5 pumps", espresso: espressoBySize["中杯"] },
+        },
+        "大杯": {
+          "全糖": { pumps: "2.5 pumps", espresso: espressoBySize["大杯"] },
+          "少糖": { pumps: "2 pumps", espresso: espressoBySize["大杯"] },
+          "半糖": { pumps: "1.33 pumps", espresso: espressoBySize["大杯"] },
+          "微糖": { pumps: "0.66 pumps", espresso: espressoBySize["大杯"] },
+        },
+        "特大杯": {
+          "全糖": { pumps: "3 pumps", espresso: espressoBySize["特大杯"] },
+          "少糖": { pumps: "2.33 pumps", espresso: espressoBySize["特大杯"] },
+          "半糖": { pumps: "1.5 pumps", espresso: espressoBySize["特大杯"] },
+          "微糖": { pumps: "1 pumps", espresso: espressoBySize["特大杯"] },
+        },
+      };
+    }
+
+    function makeCaramelMacchiato(espressoBySize) {
+      return {
+        "中杯": {
+          "全糖": { pumps: "1 pumps", espresso: espressoBySize["中杯"] },
+          "少糖": { pumps: "0.66 pumps", espresso: espressoBySize["中杯"] },
+          "半糖": { pumps: "0.5 pumps", espresso: espressoBySize["中杯"] },
+          "微糖": { pumps: "0.33 pumps", espresso: espressoBySize["中杯"] },
+        },
+        "大杯": {
+          "全糖": { pumps: "1.33 pumps", espresso: espressoBySize["大杯"] },
+          "少糖": { pumps: "1 pumps", espresso: espressoBySize["大杯"] },
+          "半糖": { pumps: "0.66 pumps", espresso: espressoBySize["大杯"] },
+          "微糖": { pumps: "0.33 pumps", espresso: espressoBySize["大杯"] },
+        },
+        "特大杯": {
+          "全糖": { pumps: "1.5 pumps", espresso: espressoBySize["特大杯"] },
+          "少糖": { pumps: "1.33 pumps", espresso: espressoBySize["特大杯"] },
+          "半糖": { pumps: "1 pumps", espresso: espressoBySize["特大杯"] },
+          "微糖": { pumps: "0.66 pumps", espresso: espressoBySize["特大杯"] },
+        },
+      };
+    }
+
+    const menu = {
+      "美式咖啡": makeStandard({ "中杯": "1 個底", "大杯": "1 個大底", "特大杯": "2 個底" }),
+      "拿鐵咖啡": makeStandard({ "中杯": "1 個底", "大杯": "1 個大底", "特大杯": "2 個底" }),
+      "焦糖瑪奇朵": makeCaramelMacchiato({ "中杯": "1 個底", "大杯": "1 個大底", "特大杯": "2 個底" }),
+      "微韻輕美式": makeStandard({ "中杯": "0.5 個底", "大杯": "1 個底", "特大杯": "1 個大底" }),
+      "微韻輕拿鐵": makeStandard({ "中杯": "0.5 個底", "大杯": "1 個底", "特大杯": "1 個大底" }),
+      "經典燕麥拿鐵": makeStandard({ "中杯": "0.5 個底", "大杯": "1 個底", "特大杯": "1 個大底" }),
+      "微韻燕麥拿鐵": makeStandard({ "中杯": "0.5 個底", "大杯": "1 個底", "特大杯": "1 個大底" }),
+      "卡希奇諾": makeStandard({ "中杯": "1 個大底", "大杯": "2 個底", "特大杯": "2.5 個底" }),
+    };
+
+    const sizeOptions = ["中杯", "大杯", "特大杯"];
+    const sugarOptions = ["全糖", "少糖", "半糖", "微糖"];
+    let coffee = "美式咖啡";
+    let size = "中杯";
+    let sugar = "全糖";
+
+    const coffeeSelect = document.getElementById("coffee");
+    const sizeButtons = document.getElementById("sizeButtons");
+    const sugarButtons = document.getElementById("sugarButtons");
+
+    Object.keys(menu).forEach(item => {
+      const option = document.createElement("option");
+      option.value = item;
+      option.textContent = item;
+      coffeeSelect.appendChild(option);
+    });
+
+    coffeeSelect.addEventListener("change", e => {
+      coffee = e.target.value;
+      update();
+    });
+
+    function createButtons(container, options, type) {
+      options.forEach(item => {
+        const btn = document.createElement("button");
+        btn.textContent = item;
+        btn.addEventListener("click", () => {
+          if (type === "size") size = item;
+          if (type === "sugar") sugar = item;
+          update();
+        });
+        container.appendChild(btn);
+      });
+    }
+
+    createButtons(sizeButtons, sizeOptions, "size");
+    createButtons(sugarButtons, sugarOptions, "sugar");
+
+    function update() {
+      const result = menu[coffee][size][sugar];
+      document.getElementById("pumpsResult").textContent = result.pumps;
+      document.getElementById("espressoResult").textContent = result.espresso;
+      document.getElementById("currentChoice").textContent = `${coffee}・${size}・${sugar}`;
+
+      [...sizeButtons.children].forEach(btn => {
+        btn.className = btn.textContent === size ? "active-size" : "";
+      });
+      [...sugarButtons.children].forEach(btn => {
+        btn.className = btn.textContent === sugar ? "active-sugar" : "";
+      });
+    }
+
+    update();
+  </script>
+</body>
+</html>
